@@ -1,0 +1,13 @@
+#!pip install ipython==7.4.0
+!pip install -U -q zipfile36
+!pip install -U -q PyDrive
+!pip install -U -q dask_ml
+
+!git clone https://github.com/kkahloots/Autoencoders.git
+!mv ./Autoencoders/* ./
+!mkdir experiments
+
+#colabpath = '1iY2q3QtVBAlmbZRPN4h7r2IBECa9G2VB'
+
+#    +>AD`c+W4J/nJ*^L
+#    autoencoders.project
