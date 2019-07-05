@@ -206,6 +206,11 @@ class AE(BaseModel):
 
             if self.config.colab:
                 self.push_colab()
+            z = self.encode(self.data_train.x)
+            self.config.latent_max = z.max().compute()
+            self.config.latent_min = z.min().compute()
+            self.config.latent_std = z.std().compute()
+            del z
         return
 
 

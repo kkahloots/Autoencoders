@@ -45,6 +45,10 @@ config['kinit']=tf.contrib.layers.xavier_initializer()
 config['bias_init']=tf.constant_initializer(0.0)
 config['reuse']=False
 
+config['latent_max']=1
+config['latent_min']=1
+config['latent_std']=1
+
 ####### Beta VAE
 config['beta']=10.0
 
@@ -81,7 +85,7 @@ def get_model_name(model, config):
 
     elif model in [Models.BVAE, Models.BTCVAE]:
         return get_model_name_AE(model, config) + '_' \
-                 + 'b' + str(config.beta)
+                 + 'b' + str(config.beta).replace('.','')
 
     elif model in [Models.AnnealedVAE]:
         return get_model_name_AE(model, config) + '_' \

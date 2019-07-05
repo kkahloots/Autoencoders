@@ -5,6 +5,8 @@ from networks.dense_net import DenseNet
 from networks.conv_net import ConvNet3
 from networks.deconv_net import DeconvNet3
 
+import utils.constants as const
+
 class BaseGraph:
     def __init__(self):
         with tf.variable_scope('global_step'):
@@ -22,6 +24,57 @@ class BaseGraph:
 
     def evaluate_epoch(self):
         raise NotImplementedError
+
+    '''  
+    ------------------------------------------------------------------------------
+                                     GENERATE LATENT and RECONSTRUCT
+    ------------------------------------------------------------------------------ 
+    '''
+
+    def reconst_loss(self, session, x):
+        tensors = [self.reconstruction]
+        feed = {self.x_batch: x}
+        return session.run(tensors, feed_dict=feed)
+
+    def decay_lr(self, session):
+        self.lr = tf.multiply(0.1, self.lr)
+        nlr = session.run(self.lr)
+
+        if nlr > const.min_lr:
+            print('decaying learning rate ... ')
+
+            tensors = [self.lr]
+            feed_dict = {self.lr: nlr}
+            nlr = session.run(tensors, feed_dict=feed_dict)[0]
+            nlr = session.run(self.lr)
+            nlr = round(nlr, 8)
+            print('new learning rate: {}'.format(nlr))
+
+    '''  
+    ------------------------------------------------------------------------------
+                                         GRAPH OPERATIONS
+    ------------------------------------------------------------------------------ 
+    '''
+
+    def encode(self, session, inputs):
+        tensors = [self.latent]
+        feed_dict = {self.x_batch: inputs}
+        return session.run(tensors, feed_dict=feed_dict)
+
+    def decode(self, session, latent):
+        tensors = [self.x_recons]
+        feed_dict = {self.latent: latent}
+        return session.run(tensors, feed_dict=feed_dict)
+
+    def sample(self, session):
+        random_latent = session.run(tf.random_normal((self.batch_size, self.latent_dim), \
+                                                     self.latent_min + (2*self.latent_std),
+                                                     self.latent_max + (2*self.latent_std), \
+                                                     dtype=tf.float32))
+        tensors = [self.x_recons]
+        feed_dict = {self.latent_batch: random_latent}
+        return session.run(tensors, feed_dict=feed_dict)[0]
+
 
     '''  
     ------------------------------------------------------------------------------

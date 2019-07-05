@@ -185,7 +185,7 @@ def plot_samples(samples, scale=10, save=None):
         plt.close()
     del im, samples, fig, ax
     gc.collect()
-    
+
 def pick_n(X, n):
     samples = list()
     for _ in range(n):
