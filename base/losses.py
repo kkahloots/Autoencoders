@@ -34,6 +34,7 @@ def anneal(c_max, step, iteration_threshold):
                          c_max * 1. * tf.to_float(step) / iteration_threshold)
 
 
+
 def get_QP_kl(meanQ, log_varQ, meanP, log_varP):
     """
     KL[Q || P] returns the KL-divergence between the prior p and the variational posterior q.

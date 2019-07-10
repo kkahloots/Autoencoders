@@ -127,7 +127,7 @@ class AnnealedVAEGraph(BaseGraph):
             self.vae_loss = tf.add(self.ae_loss, self.kl_loss_m)
 
         with tf.variable_scope('annvae_loss', reuse=self.reuse):
-            c = losses.anneal(self.c_max, tf.train.get_global_step(), self.itr_thd)
+            c = losses.anneal(self.c_max, self.global_step_tensor, self.itr_thd)
             regularizer = self.ann_gamma * tf.math.abs(self.kl_loss_m - c)
             self.annvae_loss = tf.add(self.ae_loss, regularizer)
 

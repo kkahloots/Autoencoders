@@ -53,9 +53,9 @@ config['latent_std']=1
 config['beta']=10.0
 
 ####### AnnealedVAE
-config['ann_gamma']=1000
+config['ann_gamma']=100
 config['c_max']=25
-config['itr_thd']=100000
+config['itr_thd']=1000
 
 ####### DIPIVAE
 config['lambda_d']=10
