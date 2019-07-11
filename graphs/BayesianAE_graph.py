@@ -50,53 +50,34 @@ class BayesianAEGraph(BaseGraph):
             input_sample = tf.reshape(self.x_batch , [-1, self.width, self.height, self.num_channels])
         print('\n[*] sample shape {}'.format(input_sample.shape))
 
-        print('\n[*] Defining prior encoders...')
+        print('\n[*] Defining prior ...')
         with tf.variable_scope('prior_mean', reuse=self.reuse):
             Qlatent_x_mean = self.create_encoder(input_=input_sample,
-                            hidden_dim=self.hidden_dim,
-                            output_dim=self.latent_dim,
-                            num_layers=self.num_layers,
-                            transfer_fct=self.transfer_fct,
-                            act_out=None,
-                            reuse=self.reuse,
-                            kinit=self.kinit,
-                            bias_init=self.bias_init,
-                            drop_rate=self.dropout,
-                            prefix='enmean_',
-                            isConv=self.isConv)
-
-            self.prior_mean = Qlatent_x_mean.output
-
-        with tf.variable_scope('prior_var', reuse=self.reuse):
-            Qlatent_x_var = self.create_encoder(input_=input_sample,
                                                  hidden_dim=self.hidden_dim,
                                                  output_dim=self.latent_dim,
                                                  num_layers=self.num_layers,
                                                  transfer_fct=self.transfer_fct,
-                                                 act_out=tf.nn.softplus,
+                                                 act_out=None,
                                                  reuse=self.reuse,
                                                  kinit=self.kinit,
                                                  bias_init=self.bias_init,
                                                  drop_rate=self.dropout,
-                                                 prefix='envar_',
+                                                 prefix='prior_var_',
                                                  isConv=self.isConv)
 
-            self.prior_var = Qlatent_x_var.output
+            self.prior_mean = Qlatent_x_mean.output
 
-        print('\n[*] Prior Reparameterization trick...')
-        self.prior_logvar = tf.log(self.prior_var + const.epsilon)
-        eps = tf.random_normal((self.batch_size, self.latent_dim), 0, 1, dtype=tf.float32)
-        self.latent = tf.add(self.prior_mean, tf.multiply(tf.sqrt(self.prior_var), eps))
+        with tf.variable_scope('prior_var', reuse=self.reuse):
+            self.prior_var = tf.nn.sigmoid(self.prior_mean)
 
-        self.latent_batch = self.latent
-        print('\n[*] latent shape {}'.format(self.latent_batch.shape))
 
         ####################################################################################
-        print('\n[*] Defining posterior decoder...')
-        with tf.variable_scope('posterior_mean', reuse=self.reuse):
-            Px_latent_mean = self.create_decoder(input_=self.latent_batch,
+        print('\n[*] Defining posterior ...')
+        print('\n[*] Defining posterior encoder...')
+        with tf.variable_scope('post_encoder', reuse=self.reuse):
+            Qlatent_x = self.create_encoder(input_=self.x_batch if self.isConv else self.x_batch_flat,
                                             hidden_dim=self.hidden_dim,
-                                            output_dim=self.x_flat_dim,
+                                            output_dim=self.latent_dim,
                                             num_layers=self.num_layers,
                                             transfer_fct=self.transfer_fct,
                                             act_out=None,
@@ -104,35 +85,33 @@ class BayesianAEGraph(BaseGraph):
                                             kinit=self.kinit,
                                             bias_init=self.bias_init,
                                             drop_rate=self.dropout,
-                                            prefix='demean_',
+                                            prefix='post_en_',
                                             isConv=self.isConv)
 
-            self.posterior_mean = Px_latent_mean.output
+            self.post_mean = Qlatent_x.output
+            self.post_var = tf.nn.sigmoid(self.post_mean)
 
-        with tf.variable_scope('posterior_var', reuse=self.reuse):
-            Px_latent_var = self.create_decoder(input_=self.latent_batch,
+            self.latent = self.post_mean
+            self.latent_batch = self.latent
+
+        print('\n[*] Defining posterior decoder...')
+        with tf.variable_scope('post_decoder', reuse=self.reuse):
+            Px_latent = self.create_decoder(input_=self.latent_batch,
                                             hidden_dim=self.hidden_dim,
                                             output_dim=self.x_flat_dim,
                                             num_layers=self.num_layers,
                                             transfer_fct=self.transfer_fct,
-                                            act_out=tf.nn.softplus,
+                                            act_out=tf.nn.sigmoid,
                                             reuse=self.reuse,
                                             kinit=self.kinit,
                                             bias_init=self.bias_init,
                                             drop_rate=self.dropout,
-                                            prefix='devar_',
+                                            prefix='post_de_',
                                             isConv=self.isConv)
 
-            self.posterior_var = Px_latent_var.output
+            self.x_recons_flat = Px_latent.output
+        self.x_recons = tf.reshape(self.x_recons_flat, [-1, self.width, self.height, self.num_channels])
 
-        print('\n[*] Posterior Reparameterization trick...')
-        self.posterior_logvar = tf.log(self.posterior_var + const.epsilon)
-        eps = tf.random_normal((self.batch_size, self.x_flat_dim), 0, 1, dtype=tf.float32)
-        print('here')
-        self.x_recons_flat = tf.add(self.posterior_mean, tf.multiply(tf.sqrt(self.posterior_var), eps))
-
-        self.x_recons = tf.reshape(self.x_recons_flat , [-1,self.width, self.height, self.num_channels])
-        print('\n[*] x_recons shape {}'.format(self.x_recons.shape))
     '''  
     ------------------------------------------------------------------------------
                                      LOSSES
@@ -152,8 +131,9 @@ class BayesianAEGraph(BaseGraph):
             self.ae_loss = tf.add(tf.reduce_mean(self.reconstruction), self.l2*self.L2_loss, name='ae_loss')
 
         with tf.variable_scope('bayae_loss', reuse=self.reuse):
-            kl = losses.get_QP_kl(self.posterior_mean, self.posterior_logvar, self.prior_mean, self.prior_logvar)
-            self.bayae_loss = tf.add(tf.cast(self.num_batches, 'float32')*self.ae_loss, tf.reduce_mean(kl), name='bayae_loss')
+            bay_kl = losses.get_QP_kl(self.post_mean, self.post_var, self.prior_mean, self.prior_var)
+
+            self.bayae_loss = tf.add(tf.cast(self.num_batches, 'float32')*self.ae_loss, bay_kl, name='bayae_loss')
 
         with tf.variable_scope("optimizer" ,reuse=self.reuse):
             self.optimizer = tf.train.AdamOptimizer(self.lr)

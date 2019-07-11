@@ -68,19 +68,24 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     shape_ = list(X.shape[1:])
 
     samples = list()
+    samples_labels = list()
     print('Preparing samples ...')
     for _ in range(2):
         for y_uniq in y_uniqs:
             sample = list()
+            lable = list()
             for xa, ya in zip(chunks(X, 100),chunks(y, 100)):
                 try:
                     sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
+                    lable.lables(y_uniq)
                     if len(sample) >= 10:
                         break
                 except:
                     pass
             samples += sample
+            samples_labels += lable
     samples = da.vstack(samples)
+    samples_labels = da.vstack(samples_labels)
 
     X_train, X_test, y_train, y_test = train_test_split(X.flatten().reshape(len_, -1), y, test_size=test_size,
                                                         random_state=4891)
@@ -95,6 +100,8 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     test_dataset = Dataset(X_test, y_test)
 
     train_dataset.samples = samples
+    train_dataset.samples_labels = samples_labels
+
     print('Sample dataset shape: ', train_dataset.samples.shape)
     return train_dataset, test_dataset
 

@@ -139,7 +139,7 @@ class BTCVAEGraph(BaseGraph):
             If alpha = gamma = 1, Eq 4 can be
             written as ELBO + (1 - beta) * TC.
             """
-            tc =  tf.multiply(self.beta-1, self.total_correlation(self.latent_batch, self.encoder_mean, \
+            tc =  tf.multiply(1-self.beta, self.total_correlation(self.latent_batch, self.encoder_mean, \
                                                                   self.encoder_logvar))
             regularizer =  tf.add(self.kl_loss_m, tc)
             self.btcvae_loss = tf.add(self.ae_loss, regularizer)
