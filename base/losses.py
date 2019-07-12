@@ -20,21 +20,6 @@ def get_kl(mu, log_var):
     # Formula: 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     return - 0.5 * tf.reduce_sum( 1.0 + 2.0 * log_var - tf.square(mu) - tf.exp(2.0 * log_var), 1)
 
-
-def anneal(c_max, step, iteration_threshold):
-  """Anneal function for anneal_vae (https://arxiv.org/abs/1804.03599).
-  Args:
-    c_max: Maximum capacity.
-    step: Current step.
-    iteration_threshold: How many iterations to reach c_max.
-  Returns:
-    Capacity annealed linearly until c_max.
-  """
-  return tf.math.minimum(c_max * 1.,
-                         c_max * 1. * tf.to_float(step) / iteration_threshold)
-
-
-
 def get_QP_kl(meanQ, log_varQ, meanP, log_varP):
     """
     KL[Q || P] returns the KL-divergence between the prior p and the variational posterior q.
@@ -51,3 +36,18 @@ def get_QP_kl(meanQ, log_varQ, meanP, log_varP):
 
     return - 0.5 * tf.reduce_sum(
         log_varP - log_varQ + (tf.square(meanQ - meanP) / tf.exp(log_varP)) + tf.exp(log_varQ - log_varP) - 1)
+
+
+def anneal(c_max, step, iteration_threshold):
+  """Anneal function for anneal_vae (https://arxiv.org/abs/1804.03599).
+  Args:
+    c_max: Maximum capacity.
+    step: Current step.
+    iteration_threshold: How many iterations to reach c_max.
+  Returns:
+    Capacity annealed linearly until c_max.
+  """
+  return tf.math.minimum(c_max * 1.,
+                         c_max * 1. * tf.to_float(step) / iteration_threshold)
+
+

@@ -28,5 +28,5 @@ def Factory(configuration):
         return DIPIVAEGraph(configuration)
     elif configuration['model_type'] == Models.DIPIIVAE:
         return DIPIIVAEGraph(configuration)
-    elif configuration['model_type'] == Models.BayVAE:
+    elif configuration['model_type'] == Models.BayAE:
         return BayesianAEGraph(configuration)

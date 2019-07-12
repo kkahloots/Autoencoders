@@ -7,7 +7,7 @@ class Models:
     DIPIVAE = 'DIPIVAE'
     DIPIIVAE = 'DIPIIVAE'
     BTCVAE = 'BTCVAE'
-    BayVAE = 'BayVAE'
+    BayAE = 'BayAE'
 
 # Stopping tolerance
 tol = 1e-8
@@ -98,6 +98,6 @@ def get_model_name(model, config):
                  + 'lmd' + str(config.lambda_d) + '_' \
                  + 'fact' + str(config.d_factor)
 
-    elif model in [Models.BayVAE]:
+    elif model in [Models.BayAE]:
         return get_model_name_AE(model, config) + '_' \
                  + 'mc' + str(config.MC_samples)

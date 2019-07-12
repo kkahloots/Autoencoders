@@ -73,17 +73,17 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     for _ in range(2):
         for y_uniq in y_uniqs:
             sample = list()
-            lable = list()
+            label = list()
             for xa, ya in zip(chunks(X, 100),chunks(y, 100)):
                 try:
                     sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
-                    lable.lables(y_uniq)
+                    label.append(y_uniq)
                     if len(sample) >= 10:
                         break
                 except:
                     pass
             samples += sample
-            samples_labels += lable
+            samples_labels += label
     samples = da.vstack(samples)
     samples_labels = da.vstack(samples_labels)
 
