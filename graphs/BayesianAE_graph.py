@@ -27,7 +27,7 @@ class BayesianAEGraph(BaseGraph):
         self.create_inputs()
         self.create_graph()
         self.create_loss_optimizer()
-    
+
     def create_inputs(self):
         with tf.variable_scope('inputs', reuse=self.reuse):
             self.x_batch = tf.placeholder(tf.float32, [self.batch_size, self.width, self.height, self.num_channels], name='x_batch')
@@ -58,17 +58,17 @@ class BayesianAEGraph(BaseGraph):
         print('\n[*] Defining prior encoder...')
         with tf.variable_scope('prior_encoder', reuse=self.reuse):
             Qlatent_sample = self.create_encoder(input_=sample_input if self.isConv else self.sample_flat,
-                                            hidden_dim=self.hidden_dim,
-                                            output_dim=self.latent_dim,
-                                            num_layers=self.num_layers,
-                                            transfer_fct=self.transfer_fct,
-                                            act_out=None,
-                                            reuse=self.reuse,
-                                            kinit=self.kinit,
-                                            bias_init=self.bias_init,
-                                            drop_rate=self.dropout,
-                                            prefix='prior_en_',
-                                            isConv=self.isConv)
+                                                 hidden_dim=self.hidden_dim,
+                                                 output_dim=self.latent_dim,
+                                                 num_layers=self.num_layers,
+                                                 transfer_fct=self.transfer_fct,
+                                                 act_out=None,
+                                                 reuse=self.reuse,
+                                                 kinit=self.kinit,
+                                                 bias_init=self.bias_init,
+                                                 drop_rate=self.dropout,
+                                                 prefix='prior_en_',
+                                                 isConv=self.isConv)
 
             self.prior_mean = Qlatent_sample.output
             self.prior_var = tf.nn.sigmoid(self.prior_mean)
@@ -78,18 +78,21 @@ class BayesianAEGraph(BaseGraph):
         print('\n[*] Defining prior decoder...')
         with tf.variable_scope('prior_decoder', reuse=self.reuse):
             Psample_latent = self.create_decoder(input_=self.latent_sample,
-                                            hidden_dim=self.hidden_dim,
-                                            output_dim=sample_flat_shape[-1],
-                                            num_layers=self.num_layers,
-                                            transfer_fct=self.transfer_fct,
-                                            act_out=tf.nn.sigmoid,
-                                            reuse=self.reuse,
-                                            kinit=self.kinit,
-                                            bias_init=self.bias_init,
-                                            drop_rate=self.dropout,
-                                            prefix='prior_de_',
-                                            isConv=self.isConv)
+                                                hidden_dim=self.hidden_dim,
+                                                output_dim=sample_flat_shape[-1],
+                                                num_layers=self.num_layers,
+                                                transfer_fct=self.transfer_fct,
+                                                act_out=tf.nn.sigmoid,
+                                                reuse=self.reuse,
+                                                kinit=self.kinit,
+                                                bias_init=self.bias_init,
+                                                drop_rate=self.dropout,
+                                                prefix='prior_de_',
+                                                isConv=self.isConv)
             self.sample_recons_flat = Psample_latent.output
+            if self.isConv:
+                self.sample_recons_flat = tf.reshape(self.sample_recons_flat, sample_flat_shape)
+            print('\n[*] sample reconstruction shape {}'.format(self.sample_recons_flat.shape))
 
         ####################################################################################
         print('\n[*] Defining posterior ...')
@@ -154,10 +157,14 @@ class BayesianAEGraph(BaseGraph):
         with tf.variable_scope('ae_loss', reuse=self.reuse):
             self.ae_loss = tf.add(tf.reduce_mean(self.reconstruction), self.l2*self.L2_loss, name='ae_loss') + self.prior_recons_m
 
-
         with tf.variable_scope('bayae_loss', reuse=self.reuse):
-            self.bay_kl = -1 * losses.get_QP_kl(self.post_mean, self.post_var, \
-                                      self.prior_mean, self.prior_var+const.epsilon)
+
+            if self.isConv:
+                self.bay_kl = -1 * losses.get_QP_kl(self.post_mean, self.post_var, \
+                                          tf.reshape(self.prior_mean, [self.MC_samples, self.batch_size, self.latent_dim]), tf.reshape(self.prior_var, [self.MC_samples, self.batch_size, self.latent_dim]) )
+            else:
+                self.bay_kl = -1 * losses.get_QP_kl(self.post_mean, self.post_var, \
+                                          self.prior_mean, self.prior_var)
 
             self.bayae_loss = tf.add(tf.cast(self.num_batches, 'float32')*self.ae_loss, self.bay_kl, name='bayae_loss')
 
