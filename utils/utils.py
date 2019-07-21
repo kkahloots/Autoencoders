@@ -26,11 +26,13 @@ def prepare_dataset(X):
     shape_ = X.shape
 
     d = int(np.sqrt(X.flatten().reshape(X.shape[0], -1).shape[1]))
-
-    if len(shape_) == 4:
+    print(shape_)
+    if len(shape_) == 4 and shape_[3] == 3:
         d = int(np.sqrt(X.flatten().reshape(X.shape[0], -1).shape[1] / 3))
         X = np.reshape(X, [-1, d, d, 3])
-
+    elif len(shape_) == 4 and shape_[3] == 1:
+        d = int(np.sqrt(X.flatten().reshape(X.shape[0], -1).shape[1] ))
+        X = np.reshape(X, [-1, d, d, 1])
     elif d == shape_[1] and len(shape_) == 3:
         X = np.array(list(map(lambda x: grey2rgb(x), X)), dtype=np.float32)
         X = np.reshape(X, [-1, d, d, 3])
@@ -76,11 +78,13 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
             label = list()
             for xa, ya in zip(chunks(X, 100),chunks(y, 100)):
                 try:
+                    print("hello")
                     sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
                     label.append(y_uniq)
                     if len(sample) >= 10:
                         break
-                except:
+                except Exception as e:
+                    print(e)
                     pass
             samples += sample
             samples_labels += label

@@ -112,6 +112,23 @@ class AE(BaseModel):
         logger.summarize(cur_it,  summarizer='evaluate', summaries_dict=summaries_dict)
         return losses
 
+    def _evaluate_metric(self, data_eval, session, logger):
+        losses = list()
+        for _ in tqdm(range(data_eval.num_batches(self.config.batch_size))):
+            batch_x = next(data_eval.next_batch(self.config.batch_size))
+            loss_curr = self.model_graph.evaluate_epoch_metric(session, batch_x)
+
+            losses.append(loss_curr)
+
+        losses = np.mean(np.vstack(losses), axis=0)
+
+        cur_it = self.model_graph.global_step_tensor.eval(session)
+        summaries_dict = dict(zip(self.model_graph.losses, losses))
+
+        logger.summarize(cur_it,  summarizer='evaluate', summaries_dict=summaries_dict)
+        return losses
+
+
     '''
     ------------------------------------------------------------------------------
                                          EPOCH FUNCTIONS
@@ -259,6 +276,24 @@ class AE(BaseModel):
             print('random sample batch ...')
             samples = self.model_graph.sample(session)
             print('random sample shape {}'.format(samples.shape))
+
+    def run_metrics(self):
+        with tf.Session(graph=self.graph) as session:
+            tf.set_random_seed(222222)
+            self.session = session
+            logger = Logger(self.session, self.config.summary_dir)
+            saver = tf.train.Saver()
+
+            if (self.config.restore and self.load(self.session, saver)):
+                num_epochs_trained = self.model_graph.cur_epoch_tensor.eval(self.session)
+                print('EPOCHS trained: ', num_epochs_trained)
+            else:
+                print('Initializing Variables ...')
+                tf.global_variables_initializer().run()
+
+            print('random sample batch ...')
+            metric  = self._evaluate_metric(self.data_eval, self.session, logger)
+            print('random sample shape {}'.format(metric))
 
     def reconst_samples_out_data(self):
         with tf.Session(graph=self.graph) as session:

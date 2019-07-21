@@ -11,6 +11,8 @@ import numpy as np
 import utils.constants as const
 from base.base_graph import BaseGraph
 import base.losses as losses
+import utils.unsupervisedmetrics as unsupervisedmetrics
+
 
 '''
 This is the Main VAEGraph.
@@ -148,3 +150,13 @@ class VAEGraph(BaseGraph):
         feed_dict = {self.x_batch: x}
         loss, aeloss, recons, L2_loss  = session.run(tensors, feed_dict=feed_dict)
         return loss, aeloss, recons, L2_loss
+
+    def evaluate_epoch_metric(self, session, x):
+        tensors = [self.x_recons]
+        feed_dict = {self.x_batch: x}
+        x_recons = session.run(tensors, feed_dict=feed_dict)
+        x_recons=np.array(x_recons);
+        x_recons=x_recons.reshape([-1,2352])
+        cov = np.cov(x_recons)
+        return unsupervisedmetrics.gaussian_wasserstein_correlation(cov);
+

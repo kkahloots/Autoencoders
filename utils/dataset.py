@@ -102,7 +102,7 @@ class Dataset:
             rest_ndata = self._ndata - start
             
             x_rest_part = self._x[start:self._ndata]
-            labels_rest_part = self._labels[start:self._ndata]
+            labels_rest_part = self._labels[start:self._ndata]  
             
             if(shuffle):
                 idx0 = da.arange(0, self._ndata)  # get all possible indexes
