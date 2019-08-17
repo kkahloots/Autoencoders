@@ -15,17 +15,20 @@ def mig(mus,ys):
     sorted_m = np.sort(m, axis=0)[::-1]
     mig = np.mean(
     np.divide(sorted_m[0, :] - sorted_m[1, :], entropy[:]))
+    print("Entropy {} M value {}".format(entropy,m))
     return mig;
 
 def discrete_mutual_info(mus, ys):
   """Compute discrete mutual information."""
   num_codes = mus.shape[0]
   num_factors = ys.shape[0]
-  print(mus.shape,ys.shape)
+  #print(mus.shape,ys.shape)
   m = np.zeros([num_codes, num_factors])
   for i in range(num_codes):
     for j in range(num_factors):
-      m[i, j] = sklearn.metrics.mutual_info_score(ys[j, :], mus[i, :])
+      Temp = sklearn.metrics.mutual_info_score(ys[j, :], mus[i, :])
+      #print("Temp variable {}".format(Temp))
+      m[i, j] = Temp
   return m
 
 def discrete_entropy(ys):
@@ -86,15 +89,14 @@ def completeness(importance_matrix):
   return np.sum(per_factor*factor_importance)
 
 
-def _compute_dci(x_recon, x):
+def _compute_dci(z, y):
   """Computes score based on both training and testing codes and factors."""
   scores = {}
   importance_matrix, train_err = compute_importance_gbt(
-      x_recon, x)
-  assert importance_matrix.shape[0] == x_recon.shape[0]
-  assert importance_matrix.shape[1] == x.shape[0]
+      z, y)
+  assert importance_matrix.shape[0] == z.shape[0]
+  assert importance_matrix.shape[1] == y.shape[0]
   informativeness_train = train_err
   disentanglement = disentanglement(importance_matrix)
   completeness = completeness(importance_matrix)
   return informativeness_train,disentanglement,completeness
-

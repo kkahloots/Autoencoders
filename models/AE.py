@@ -128,6 +128,21 @@ class AE(BaseModel):
         logger.summarize(cur_it,  summarizer='evaluate', summaries_dict=summaries_dict)
         return losses
 
+    def _evaluate_metric_supervised(self, data_eval, session, logger):
+        losses = list()
+        for _ in tqdm(range(data_eval.num_batches(self.config.batch_size))):
+            batch_x, batch_y = next(data_eval.next_batch(self.config.batch_size, with_labels = True))
+            loss_curr = self.model_graph.evaluate_epoch_metric_supervised(session, batch_x, batch_y)
+
+            losses.append(loss_curr)
+
+        losses = np.mean(np.vstack(losses), axis=0)
+
+        cur_it = self.model_graph.global_step_tensor.eval(session)
+        summaries_dict = dict(zip(self.model_graph.losses, losses))
+
+        logger.summarize(cur_it,  summarizer='evaluate', summaries_dict=summaries_dict)
+        return losses
 
     '''
     ------------------------------------------------------------------------------
@@ -293,7 +308,9 @@ class AE(BaseModel):
 
             print('random sample batch ...')
             metric  = self._evaluate_metric(self.data_eval, self.session, logger)
-            print('random sample shape {}'.format(metric))
+            print('Unsupervised metric{}'.format(metric))
+            metric2 = self._evaluate_metric_supervised(self.data_eval, self.session, logger)
+            print('Supervised metric  {}'.format(metric2))
 
     def reconst_samples_out_data(self):
         with tf.Session(graph=self.graph) as session:

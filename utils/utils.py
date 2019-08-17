@@ -59,7 +59,13 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
         km = dask_ml.cluster.KMeans(n_clusters=10, init_max_iter=100)
         km.fit(X.flatten().reshape(-1, 1))
         y = km.labels_
-    y_uniqs = np.unique(y)
+
+    #
+    # from sklearn import preprocessing
+    # le = preprocessing.LabelEncoder()
+    # y = le.fit_transform(y)
+
+    y_uniqs = np.unique(y[:,0])
 
     len_ = X.shape[0]
     X = prepare_dataset(X)
@@ -76,15 +82,13 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
         for y_uniq in y_uniqs:
             sample = list()
             label = list()
-            for xa, ya in zip(chunks(X, 100),chunks(y, 100)):
+            for xa, ya in zip(chunks(X, 100),chunks(y[:,0], 100)):
                 try:
-                    print("hello")
                     sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
                     label.append(y_uniq)
                     if len(sample) >= 10:
                         break
                 except Exception as e:
-                    print(e)
                     pass
             samples += sample
             samples_labels += label

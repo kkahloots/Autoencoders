@@ -2,6 +2,8 @@
 VAE_graph.py:
 Tensorflow Graph for the Variational Autoencoder
 """
+from utils import supervisedmetrics
+
 __author__      = "Khalid M. Kahloot"
 __copyright__   = "Copyright 2019, Only for professionals"
 __paper__   = "https://arxiv.org/pdf/1606.05908.pdf"
@@ -156,7 +158,14 @@ class VAEGraph(BaseGraph):
         feed_dict = {self.x_batch: x}
         x_recons = session.run(tensors, feed_dict=feed_dict)
         x_recons=np.array(x_recons);
-        x_recons=x_recons.reshape([-1,2352])
+        x_recons=x_recons.reshape([-1,9216])
         cov = np.cov(x_recons)
         return unsupervisedmetrics.gaussian_wasserstein_correlation(cov);
 
+    def evaluate_epoch_metric_supervised(self, session, x, y):
+        tensors = [self.latent_batch]
+        feed_dict = {self.x_batch: x}
+        x_recons = session.run(tensors, feed_dict=feed_dict)
+        x_recons=np.array(x_recons);
+        x_recons=x_recons.reshape([-1,self.latent_dim])
+        return supervisedmetrics.mig(x_recons, y);

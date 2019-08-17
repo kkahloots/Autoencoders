@@ -122,7 +122,7 @@ class BaseModel:
                                                                           cur_epoch)
         self.latent_space_files.append(latent_space)
 
-        plot_dataset(latent_pca.compute(), y=data.labels, save=latent_space)
+        plot_dataset(latent_pca.compute(), y=data.labels[:,0], save=latent_space)
 
         pca = PCA(n_components=3)
         latent_pca = pca.fit_transform(latent_en)
@@ -131,7 +131,7 @@ class BaseModel:
         latent_space = self.config.log_dir + '/{} latent_3d epoch {}.jpg'.format(self.config.log_dir.split('/')[-1:][0],
                                                                              cur_epoch)
         self.latent_space3d_files.append(latent_space)
-        plot_dataset3d(latent_pca.compute(), y=data.labels, save=latent_space)
+        plot_dataset3d(latent_pca.compute(), y=data.labels[:,0], save=latent_space)
 
         del latent_pca, latent_en
         gc.collect()
