@@ -168,4 +168,7 @@ class VAEGraph(BaseGraph):
         x_recons = session.run(tensors, feed_dict=feed_dict)
         x_recons=np.array(x_recons);
         x_recons=x_recons.reshape([-1,self.latent_dim])
-        return supervisedmetrics.mig(x_recons, y);
+        y = np.array(y)
+        x_recons_t = np.transpose(x_recons)
+        y_t = np.transpose(y)
+        return supervisedmetrics.mig(x_recons_t, y_t);

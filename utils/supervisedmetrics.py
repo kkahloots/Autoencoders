@@ -6,7 +6,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 
 def mig(mus,ys):
     score_dict = {}
-    discretized_mus = mus;
+    discretized_mus =_histogram_discretize(mus,20) ;
     m = discrete_mutual_info(discretized_mus, ys)
     assert m.shape[0] == mus.shape[0]
     assert m.shape[1] == ys.shape[0]
@@ -15,7 +15,7 @@ def mig(mus,ys):
     sorted_m = np.sort(m, axis=0)[::-1]
     mig = np.mean(
     np.divide(sorted_m[0, :] - sorted_m[1, :], entropy[:]))
-    print("Entropy {} M value {}".format(entropy,m))
+    #print("Entropy {} M value {}".format(entropy,m))
     return mig;
 
 def discrete_mutual_info(mus, ys):
@@ -100,3 +100,11 @@ def _compute_dci(z, y):
   disentanglement = disentanglement(importance_matrix)
   completeness = completeness(importance_matrix)
   return informativeness_train,disentanglement,completeness
+
+def _histogram_discretize(target, num_bins):
+  """Discretization based on histograms."""
+  discretized = np.zeros_like(target)
+  for i in range(target.shape[0]):
+    discretized[i, :] = np.digitize(target[i, :], np.histogram(
+        target[i, :], num_bins)[1][:-1])
+  return discretized
