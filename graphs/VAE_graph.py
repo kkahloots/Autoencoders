@@ -162,12 +162,23 @@ class VAEGraph(BaseGraph):
         cov = np.cov(x_recons)
         return unsupervisedmetrics.gaussian_wasserstein_correlation(cov);
 
-    def evaluate_epoch_metric_supervised(self, session, x, y):
+    def evaluate_epoch_metric_supervised_dci(self, session, x, y):
         tensors = [self.latent_batch]
         feed_dict = {self.x_batch: x}
         x_recons = session.run(tensors, feed_dict=feed_dict)
         x_recons=np.array(x_recons);
         x_recons=x_recons.reshape([-1,self.latent_dim])
+        y = np.array(y)
+        x_recons_t = np.transpose(x_recons)
+        y_t = np.transpose(y)
+        return supervisedmetrics._compute_dci(x_recons_t, y_t);
+
+    def evaluate_epoch_metric_supervised_mig(self, session, x, y):
+        tensors = [self.latent_batch]
+        feed_dict = {self.x_batch: x}
+        x_recons = session.run(tensors, feed_dict=feed_dict)
+        x_recons = np.array(x_recons);
+        x_recons = x_recons.reshape([-1, self.latent_dim])
         y = np.array(y)
         x_recons_t = np.transpose(x_recons)
         y_t = np.transpose(y)

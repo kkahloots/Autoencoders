@@ -97,9 +97,9 @@ def _compute_dci(z, y):
   assert importance_matrix.shape[0] == z.shape[0]
   assert importance_matrix.shape[1] == y.shape[0]
   informativeness_train = train_err
-  disentanglement = disentanglement(importance_matrix)
-  completeness = completeness(importance_matrix)
-  return informativeness_train,disentanglement,completeness
+  disentanglement_ = disentanglement(importance_matrix)
+  completeness_ = completeness(importance_matrix)
+  return informativeness_train,disentanglement_,completeness_
 
 def _histogram_discretize(target, num_bins):
   """Discretization based on histograms."""

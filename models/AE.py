@@ -128,12 +128,14 @@ class AE(BaseModel):
         logger.summarize(cur_it,  summarizer='evaluate', summaries_dict=summaries_dict)
         return losses
 
-    def _evaluate_metric_supervised(self, data_eval, session, logger):
+    def _evaluate_metric_supervised(self, data_eval, session, logger, type):
         losses = list()
         for _ in tqdm(range(data_eval.num_batches(self.config.batch_size))):
             batch_x, batch_y = next(data_eval.next_batch(self.config.batch_size, with_labels = True))
-            loss_curr = self.model_graph.evaluate_epoch_metric_supervised(session, batch_x, batch_y)
-
+            if type == 'dci':
+                loss_curr = self.model_graph.evaluate_epoch_metric_supervised_dci(session, batch_x, batch_y)
+            elif type == 'mig':
+                loss_curr = self.model_graph.evaluate_epoch_metric_supervised_mig(session, batch_x, batch_y)
             losses.append(loss_curr)
 
         losses = np.mean(np.vstack(losses), axis=0)
@@ -309,8 +311,10 @@ class AE(BaseModel):
             print('random sample batch ...')
             metric  = self._evaluate_metric(self.data_eval, self.session, logger)
             print('Unsupervised metric{}'.format(metric))
-            metric2 = self._evaluate_metric_supervised(self.data_eval, self.session, logger)
-            print('Supervised metric  {}'.format(metric2))
+            metric2 = self._evaluate_metric_supervised(self.data_eval, self.session, logger, 'mig')
+            print('Supervised metric mig {}'.format(metric2))
+            metric3 = self._evaluate_metric_supervised(self.data_eval, self.session, logger, 'dci')
+            print('Supervised metric ci {}'.format(metric3))
 
     def reconst_samples_out_data(self):
         with tf.Session(graph=self.graph) as session:
